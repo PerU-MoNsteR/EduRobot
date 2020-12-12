@@ -1,12 +1,12 @@
 import html
 import re
 
-from pyrogram import Client, filters
-from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, Message
-
 from config import prefix
-from localization import use_chat_lang
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+
 from consts import http
+from localization import use_chat_lang
 
 
 def cleanhtml(raw_html):
@@ -37,18 +37,35 @@ async def pypi(c: Client, m: Message, strings):
         message = strings("package_details").format(
             package_name=pypi_info["name"],
             author_name=pypi_info["author"],
-            author_email=f"&lt;{pypi_info['author_email']}&gt;" if pypi_info["author_email"] else "",
+            author_email=f"&lt;{pypi_info['author_email']}&gt;"
+            if pypi_info["author_email"]
+            else "",
             platform=pypi_info["platform"] or strings("not_specified"),
             version=pypi_info["version"],
             license=pypi_info["license"] or strings("not_specified"),
-            summary=pypi_info["summary"])
+            summary=pypi_info["summary"],
+        )
 
         if pypi_info["home_page"] and pypi_info["home_page"] != "UNKNOWN":
-            kb = InlineKeyboardMarkup(inline_keyboard=[
-                                      [InlineKeyboardButton(text=strings("package_home_page"), url=pypi_info["home_page"])]])
+            kb = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=strings("package_home_page"),
+                            url=pypi_info["home_page"],
+                        )
+                    ]
+                ]
+            )
         else:
             kb = None
-        await m.reply_text(message, parse_mode="HTML", disable_web_page_preview=True, reply_markup=kb)
+        await m.reply_text(
+            message, parse_mode="HTML", disable_web_page_preview=True, reply_markup=kb
+        )
     else:
-        await m.reply_text(strings("package_not_found").format(package_name=text, http_status=r.status_code),
-                           parse_mode="HTML")
+        await m.reply_text(
+            strings("package_not_found").format(
+                package_name=text, http_status=r.status_code
+            ),
+            parse_mode="HTML",
+        )

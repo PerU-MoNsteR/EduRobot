@@ -1,6 +1,5 @@
 import httpx
 
-
 group_types = ("group", "supergroup")
 
 http = httpx.AsyncClient(http2=True)

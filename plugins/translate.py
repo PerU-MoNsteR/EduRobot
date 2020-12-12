@@ -1,10 +1,10 @@
 import html
 
-from googletrans import Translator, LANGUAGES
+from config import prefix
+from googletrans import LANGUAGES, Translator
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-from config import prefix
 from localization import use_chat_lang
 
 translator = Translator()
@@ -34,12 +34,13 @@ async def translate(c: Client, m: Message, strings):
         text = text.replace(lang, "", 1).strip() if text.startswith(lang) else text
 
     if not text:
-        return await m.reply_text(strings("translate_usage"),
-                                  reply_to_message_id=m.message_id,
-                                  parse_mode="HTML")
+        return await m.reply_text(
+            strings("translate_usage"),
+            reply_to_message_id=m.message_id,
+            parse_mode="HTML",
+        )
 
-    sent = await m.reply_text(strings("translating"),
-                              reply_to_message_id=m.message_id)
+    sent = await m.reply_text(strings("translating"), reply_to_message_id=m.message_id)
     langs = {}
 
     if len(lang.split("-")) > 1:
@@ -52,8 +53,9 @@ async def translate(c: Client, m: Message, strings):
     text = trres.text
 
     res = html.escape(text)
-    await sent.edit_text(strings("translation").format(
-            from_lang=trres.src,
-            to_lang=trres.dest,
-            translation=res),
-                         parse_mode="HTML")
+    await sent.edit_text(
+        strings("translation").format(
+            from_lang=trres.src, to_lang=trres.dest, translation=res
+        ),
+        parse_mode="HTML",
+    )

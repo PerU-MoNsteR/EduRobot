@@ -1,38 +1,37 @@
 import inspect
 import json
 import os.path
-from functools import wraps, partial
+from functools import partial, wraps
 from glob import glob
-from typing import List, Dict
+from typing import Dict, List
 
 from pyrogram.types import CallbackQuery
 
-from dbh import dbc, db
 from consts import group_types
-
+from dbh import db, dbc
 
 enabled_locales = [
-    "ar-SA",   # Arabic
-    "de-DE",   # German
-    "en-GB",   # English
-    "en-US",   # English (United States)
-    "es-ES",   # Spanish
-    "fi-FI",   # Finnish
-    "fr-FR",   # French
-    "he-IL",   # Hebrew
-    "id-ID",   # Indonesian
-    "it-IT",   # Italian
-    "ja-JP",   # Japanese
-    "no-NO",   # Norwegian
-    "pl-PL",   # Polish
-    "pt-BR",   # Portuguese (Brazil)
+    "ar-SA",  # Arabic
+    "de-DE",  # German
+    "en-GB",  # English
+    "en-US",  # English (United States)
+    "es-ES",  # Spanish
+    "fi-FI",  # Finnish
+    "fr-FR",  # French
+    "he-IL",  # Hebrew
+    "id-ID",  # Indonesian
+    "it-IT",  # Italian
+    "ja-JP",  # Japanese
+    "no-NO",  # Norwegian
+    "pl-PL",  # Polish
+    "pt-BR",  # Portuguese (Brazil)
     "pt-BR2",  # Portuguese (Brazil, informal version)
-    "ro-RO",   # Romanian
-    "ru-RU",   # Russian
-    "sv-SE",   # Swedish
-    "tr-TR",   # Turkish
-    "uk-UA",   # Ukranian
-    "zh-CN",   # Chinese (Simplified)
+    "ro-RO",  # Romanian
+    "ru-RU",  # Russian
+    "sv-SE",  # Swedish
+    "tr-TR",  # Turkish
+    "uk-UA",  # Ukranian
+    "zh-CN",  # Chinese (Simplified)
 ]
 
 default_language = "en-GB"
@@ -40,13 +39,19 @@ default_language = "en-GB"
 
 def set_db_lang(chat_id: int, chat_type: str, lang_code: str):
     if chat_type == "private":
-        dbc.execute("UPDATE users SET chat_lang = ? WHERE user_id = ?", (lang_code, chat_id))
+        dbc.execute(
+            "UPDATE users SET chat_lang = ? WHERE user_id = ?", (lang_code, chat_id)
+        )
         db.commit()
     elif chat_type in group_types:  # groups and supergroups share the same table
-        dbc.execute("UPDATE groups SET chat_lang = ? WHERE chat_id = ?", (lang_code, chat_id))
+        dbc.execute(
+            "UPDATE groups SET chat_lang = ? WHERE chat_id = ?", (lang_code, chat_id)
+        )
         db.commit()
     elif chat_type == "channel":
-        dbc.execute("UPDATE channels SET chat_lang = ? WHERE chat_id = ?", (lang_code, chat_id))
+        dbc.execute(
+            "UPDATE channels SET chat_lang = ? WHERE chat_id = ?", (lang_code, chat_id)
+        )
         db.commit()
     else:
         raise TypeError("Unknown chat type '%s'." % chat_type)
@@ -86,7 +91,9 @@ for locale in enabled_locales:
 langdict = cache_localizations(jsons)
 
 
-def get_locale_string(dic: dict, language: str, default_context: str, key: str, context: str = None) -> str:
+def get_locale_string(
+    dic: dict, language: str, default_context: str, key: str, context: str = None
+) -> str:
     if context:
         dic = langdict[language][context]
     return dic.get(key) or langdict[default_language][default_context].get(key) or key
@@ -133,4 +140,5 @@ def use_chat_lang(context=None):
             return await func(client, message, lfunc)
 
         return wrapper
+
     return decorator

@@ -8,11 +8,11 @@ import traceback
 from contextlib import redirect_stdout
 
 import speedtest
+from config import sudoers
 from meval import meval
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-from config import sudoers
 from localization import use_chat_lang
 
 prefix = "!"
@@ -30,12 +30,23 @@ async def run_cmd(c: Client, m: Message, strings):
     if re.match("(?i)poweroff|halt|shutdown|reboot", cmd):
         res = strings("forbidden_command")
     else:
-        proc = await asyncio.create_subprocess_shell(cmd,
-                                                     stdout=asyncio.subprocess.PIPE,
-                                                     stderr=asyncio.subprocess.PIPE)
+        proc = await asyncio.create_subprocess_shell(
+            cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
         stdout, stderr = await proc.communicate()
-        res = ("<b>Output:</b>\n<code>{}</code>".format(html.escape(stdout.decode().strip())) if stdout else "") + \
-              ("\n<b>Errors:</b>\n<code>{}</code>".format(html.escape(stderr.decode().strip())) if stderr else "")
+        res = (
+            "<b>Output:</b>\n<code>{}</code>".format(
+                html.escape(stdout.decode().strip())
+            )
+            if stdout
+            else ""
+        ) + (
+            "\n<b>Errors:</b>\n<code>{}</code>".format(
+                html.escape(stderr.decode().strip())
+            )
+            if stderr
+            else ""
+        )
     await m.reply_text(res)
 
 
@@ -43,9 +54,11 @@ async def run_cmd(c: Client, m: Message, strings):
 @use_chat_lang()
 async def upgrade(c: Client, m: Message, strings):
     sm = await m.reply_text("Upgrading sources...")
-    proc = await asyncio.create_subprocess_shell("git pull --no-edit",
-                                                 stdout=asyncio.subprocess.PIPE,
-                                                 stderr=asyncio.subprocess.STDOUT)
+    proc = await asyncio.create_subprocess_shell(
+        "git pull --no-edit",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
     stdout = (await proc.communicate())[0]
     if proc.returncode == 0:
         if "Already up to date." in stdout.decode():
@@ -54,7 +67,9 @@ async def upgrade(c: Client, m: Message, strings):
             await sm.edit_text(strings("restarting"))
             os.execl(sys.executable, sys.executable, *sys.argv)  # skipcq: BAN-B606
     else:
-        await sm.edit_text(f"Upgrade failed (process exited with {proc.returncode}):\n{stdout.decode()}")
+        await sm.edit_text(
+            f"Upgrade failed (process exited with {proc.returncode}):\n{stdout.decode()}"
+        )
         proc = await asyncio.create_subprocess_shell("git merge --abort")
         await proc.communicate()
 
@@ -78,12 +93,17 @@ async def evals(c: Client, m: Message):
 async def execs(c: Client, m: Message):
     strio = io.StringIO()
     code = m.text.split(maxsplit=1)[1]
-    exec("async def __ex(client, message): " + " ".join("\n " + l for l in code.split("\n")))  # skipcq: PYL-W0122
+    exec(
+        "async def __ex(client, message): "
+        + " ".join("\n " + l for l in code.split("\n"))
+    )  # skipcq: PYL-W0122
     with redirect_stdout(strio):
         try:
             await locals()["__ex"](c, m)
         except:  # skipcq
-            return await m.reply_text(html.escape(traceback.format_exc()), parse_mode="HTML")
+            return await m.reply_text(
+                html.escape(traceback.format_exc()), parse_mode="HTML"
+            )
 
     if strio.getvalue().strip():
         out = f"<code>{html.escape(strio.getvalue())}</code>"
@@ -99,11 +119,23 @@ async def test_speed(c: Client, m: Message, strings):
     sent = await m.reply_text(string.format(host="", ping="", download="", upload=""))
     s = speedtest.Speedtest()
     bs = s.get_best_server()
-    await sent.edit_text(string.format(host=bs["sponsor"], ping=int(bs["latency"]), download="", upload=""))
+    await sent.edit_text(
+        string.format(
+            host=bs["sponsor"], ping=int(bs["latency"]), download="", upload=""
+        )
+    )
     dl = round(s.download() / 1024 / 1024, 2)
-    await sent.edit_text(string.format(host=bs["sponsor"], ping=int(bs["latency"]), download=dl, upload=""))
+    await sent.edit_text(
+        string.format(
+            host=bs["sponsor"], ping=int(bs["latency"]), download=dl, upload=""
+        )
+    )
     ul = round(s.upload() / 1024 / 1024, 2)
-    await sent.edit_text(string.format(host=bs["sponsor"], ping=int(bs["latency"]), download=dl, upload=ul))
+    await sent.edit_text(
+        string.format(
+            host=bs["sponsor"], ping=int(bs["latency"]), download=dl, upload=ul
+        )
+    )
 
 
 @Client.on_message(filters.command("restart", prefix) & filters.user(sudoers))
