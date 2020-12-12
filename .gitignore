@@ -1,0 +1,10 @@
+__pycache__/
+.spyproject/
+.vscode/
+.idea/
+.venv/
+*.session-journal
+*.session
+*.db
+config.ini
+config.py
